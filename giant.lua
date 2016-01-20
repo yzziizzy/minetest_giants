@@ -52,7 +52,6 @@ mobs:register_simple_mob("giants:giant", {
 				mkSelector("seek", {
 					mkTryApproach(.8),
 					mkBashWalls(),
-					mkTryApproach(.8),
 				}),
 				mkDestroy(),
 				

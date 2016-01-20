@@ -113,9 +113,9 @@ minetest.register_entity(name, {
 		
 		if self.bt_timer > 1 then
 		
-			print("<<< start >>>")
+			print("\n<<< start >>>")
 			bt.tick[self.bt.kind](self.bt, btdata)
-			print("<<< end >>>")
+			print("<<< end >>>\n")
 		
 			self.bt_timer = 0
 		end

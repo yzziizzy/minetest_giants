@@ -80,12 +80,6 @@ function mkRepeat(name, times, what)
 end
 
 
-bt.reset.selector = function(node, data)
-	node.current_kid = -1
-end
-bt.reset.sequence = function(node, data)
-	node.current_kid = -1
-end
 
 bt.reset["repeat"] = function(node, data)
 	node.count = 0
@@ -105,12 +99,9 @@ bt.tick["repeat"] = function(node, data)
 
 	local ret = bt.tick[node.kids[1].kind](node.kids[1], data)
 	if ret ~= "running" then
-		print("repeat resetting")
-
 		bt.reset[node.kids[1].kind](node.kids[1], data)
 	end
 
-		print("repeat ending\n&&&&&")
 
 	return "success"
 end
@@ -118,6 +109,11 @@ end
 
 -- nodes never call :reset() on themselves
 
+
+bt.reset.selector = function(node, data)
+	print("selector resetting")
+	node.current_kid = -1
+end
 
 bt.tick.selector = function(node, data) 
 	
@@ -134,12 +130,13 @@ bt.tick.selector = function(node, data)
 		
 		-- reset fresh nodes
 		if ret == "failed" then
+			print("resetting kid "..node.current_kid)
 			bt.reset[cn.kind](cn, data)
 		end
 		
 		-- tick the current node
 		ret = bt.tick[cn.kind](cn, data)
-		print(" selector got status ["..ret.."] from kid "..node.current_kid)
+		print(" selector '"..node.name.."' got status ["..ret.."] from kid "..node.current_kid)
 		if ret == "running" or ret == "success" then
 			return ret
 		end
@@ -152,7 +149,9 @@ bt.tick.selector = function(node, data)
 end
 
 
-
+bt.reset.sequence = function(node, data)
+	node.current_kid = -1
+end
 
 bt.tick.sequence = function(node, data) 
 	
@@ -160,7 +159,7 @@ bt.tick.sequence = function(node, data)
 	
 	if node.current_kid  == -1 then
 		node.current_kid = 1
-		ret = "failed" -- trick reset into being run
+		ret = "success" -- trick reset into being run
 	end
 	
 	while node.current_kid <= table.getn(node.kids) do
@@ -168,13 +167,13 @@ bt.tick.sequence = function(node, data)
 		local cn = node.kids[node.current_kid]
 		
 		-- reset fresh nodes
-		if ret == "failed" then
+		if ret == "success" then
 			bt.reset[cn.kind](cn, data)
 		end
 		
 		-- tick the current node
 		ret = bt.tick[cn.kind](cn, data)
-		print(" selector got status ["..ret.."] from kid "..node.current_kid)
+		print(" sequence '"..node.name.."' got status ["..ret.."] from kid "..node.current_kid)
 		if ret == "running" or ret == "failed" then
 			return ret
 		end
@@ -188,7 +187,7 @@ end
 
 
 --  distance on x-z plane
-function distance(a,b) 
+function distance(a, b) 
 	local x = a.x - b.x
 	local z = a.z - b.z
 	
@@ -302,15 +301,17 @@ bt.tick.try_approach = function(node, data)
 		node.last_d = d
 	else 
 		local dd = math.abs(node.last_d - d)
-		print("dist: ".. dd)
+		--print("last_d: " .. node.last_d .. " d: "..d.." dist: ".. dd)
 		if dd < .02 then
 			-- we're stuck
 			node.last_d = nil
 			return "failed"
 		end
+		
+		node.last_d = d
 	end
 	
-	print("dist: ".. math.abs(node.last_d - d))
+	--print("dist: ".. math.abs(node.last_d - d))
 	
 
 	
@@ -327,6 +328,12 @@ bt.tick.destroy = function(node, data)
 	if data.targetPos == nil then 
 		return "failed" 
 	end
+	
+	-- too far away
+	if distance(data.targetPos, data.pos) > data.mob.reach then
+		return "failed"
+	end
+	
 	
 	minetest.set_node(data.targetPos, {name="air"})
 	
