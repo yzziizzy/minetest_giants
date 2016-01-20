@@ -59,16 +59,24 @@ function mkSequence(name, list)
 	
 end
 
-function mkRepeat(name, what)
+--  -1 times is forever 
+function mkRepeat(name, times, what)
 	
-	return {
+	local x = {
 		name=name,
 		kind="repeat",
 		kids = what,
-
 	}
 	
+	if type(times) == "function" then
+		x.times_fn = times
+	elseif times == nil then
+		x.times = -1
+	else
+		x.times = times
+	end
 	
+	return x
 end
 
 
@@ -80,11 +88,21 @@ bt.reset.sequence = function(node, data)
 end
 
 bt.reset["repeat"] = function(node, data)
-	
+	node.count = 0
+	if node.times_fn then
+		node.times = node.times_fn()
+	end
 end
 
 bt.tick["repeat"] = function(node, data)
 	--tprint(node)
+	if node.times ~= -1 then
+		node.count = node.count + 1
+		if node.count > node.times then
+			return "success"
+		end
+	end
+
 	local ret = bt.tick[node.kids[1].kind](node.kids[1], data)
 	if ret ~= "running" then
 		print("repeat resetting")

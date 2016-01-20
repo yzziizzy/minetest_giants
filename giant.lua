@@ -46,7 +46,7 @@ mobs:register_simple_mob("giants:giant", {
 	},
 	
 	pre_activate = function(self, s,d)
-		self.bt = mkRepeat("root", {
+		self.bt = mkRepeat("root", nil, {
 			mkSequence("snuff torches", {
 				mkFindNodeNear({"default:torch"}, 20),
 				mkSelector("seek", {
