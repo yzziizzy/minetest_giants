@@ -46,17 +46,18 @@ mobs:register_simple_mob("giants:giant", {
 	},
 	
 	pre_activate = function(self, s,d)
-		self.bt = mkRepeat("root", nil, {
-			mkSequence("snuff torches", {
-				mkFindNodeNear({"default:torch"}, 20),
-				mkSelector("seek", {
-					mkTryApproach(.8),
-					mkBashWalls(),
+		self.bt = bt.Repeat("root", nil, {
+			bt.Sequence("snuff torches", {
+				bt.FindNodeNear({"default:torch"}, 20, 10),
+				bt.Selector("seek", {
+					bt.TryApproach(1.8),
+					bt.BashWalls(),
 				}),
-				mkDestroy(),
-				
+				bt.Destroy(),
+-- 				bt.SetFire(),
 			})
 		})
+		
 	end
 })
 

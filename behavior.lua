@@ -1,11 +1,26 @@
 
+bt = {}
+bt.reset = {}
 
-bt = {
+bt.reset["repeat"]= function(...)
+end
+
+
+local bt_fns = {
 	reset={},
 	tick={},
 }
 
 
+-- nodes never call :reset() on themselves
+
+--  distance on x-z plane
+function distance(a, b) 
+	local x = a.x - b.x
+	local z = a.z - b.z
+	
+	return math.abs(math.sqrt(x*x + z*z))
+end
 
 
 
@@ -34,174 +49,121 @@ function tprint (tbl, indent)
 end
 
 
-function mkSelector(name, list)
+bt.register_action = function(name, def) 
+	if type(def.reset) ~= "function" then
+		bt_fns.reset[name] = function(node, data) end
+	else 
+		bt_fns.reset[name] = def.reset
+	end
 	
-	return {
-		name=name,
-		kind="selector",
-		current_kid=-1,
-		kids=list,
+	if type(def.tick) ~= "function" then
+		bt_fns.tick[name] = function(node, data) return "success" end
+	else 
+		bt_fns.tick[name] = def.tick
+	end
+	
+	bt[name] = function(...) 
+	
+		local x = {}
+		if type(def.ctor) == "function" then
+			x = def.ctor(...)
+		end
+		
+		x.kind = name
+		if x.name == nil then
+			x.name = name
+		end
+		
+		return x
+	end
+	
+end
 
+
+bt.reset = function(node, data)
+	return bt_fns.reset[node.kind](node, data)
+end
+
+bt.tick = function(node, data)
+	return bt_fns.tick[node.kind](node, data)
+end
+
+local path = minetest.get_modpath("giants")
+
+dofile(path..'/behaviors/core.lua')
+dofile(path..'/behaviors/predicates.lua')
+
+
+
+
+
+
+
+
+
+
+bt.register_action("FindNodeNear", {
+	tick = function(node, data)
+		if data.targetPos == nil then 
+			print("could not find node near")
+			return "failed" 
+		end
+		
+		return "success"
+	end,
+	
+	reset = function(node, data)
+		local targetpos = minetest.find_node_near(data.pos, node.dist, node.sel)
+		data.targetPos = targetpos
+	end,
+	
+	ctor = function(sel, dist)
+		return {
+			dist = dist,
+			sel = sel,
+		}
+	end,
+})
+
+
+
+
+--[[
+bt.reset.find_new_node_near = function(node, data)
+	local min_pos = {
+		x = data.pos.x - node.dist,
+		y = data.pos.y - node.dist,
+		z = data.pos.z - node.dist,
 	}
-end
-
-
-function mkSequence(name, list)
-	
-	return {
-		name=name,
-		kind="sequence",
-		current_kid=-1,
-		kids=list,
-
+	local max_pos = {
+		x = data.pos.x + node.dist,
+		y = data.pos.y + node.dist,
+		z = data.pos.z + node.dist,
 	}
 	
+	data.targetPos = nil
+
+	local list = minetest.find_nodes_in_area(min_pos, max_pos, node.sel)
 	
-end
-
---  -1 times is forever 
-function mkRepeat(name, times, what)
-	
-	local x = {
-		name=name,
-		kind="repeat",
-		kids = what,
-	}
-	
-	if type(times) == "function" then
-		x.times_fn = times
-	elseif times == nil then
-		x.times = -1
-	else
-		x.times = times
-	end
-	
-	return x
-end
-
-
-
-bt.reset["repeat"] = function(node, data)
-	node.count = 0
-	if node.times_fn then
-		node.times = node.times_fn()
-	end
-end
-
-bt.tick["repeat"] = function(node, data)
-	--tprint(node)
-	if node.times ~= -1 then
-		node.count = node.count + 1
-		if node.count > node.times then
-			return "success"
+	for _,p in ipairs(list) do
+		if not node.history[p] then
+			
+			node.history[p] = true
+			data.targetPos = p
+			
+			table.insert(node.queue, p)
+			break
 		end
 	end
-
-	local ret = bt.tick[node.kids[1].kind](node.kids[1], data)
-	if ret ~= "running" then
-		bt.reset[node.kids[1].kind](node.kids[1], data)
+	
+	local len = table.getn(node.queue)
+	if len > node.history_depth then
+		node.history[node.queue[len] ] = nil
+		table.remove(node.queue, 1)
 	end
-
-
-	return "success"
 end
 
-
--- nodes never call :reset() on themselves
-
-
-bt.reset.selector = function(node, data)
-	print("selector resetting")
-	node.current_kid = -1
-end
-
-bt.tick.selector = function(node, data) 
-	
-	local ret
-	
-	if node.current_kid  == -1 then
-		node.current_kid = 1
-		ret = "failed" -- trick reset into being run
-	end
-	
-	while node.current_kid <= table.getn(node.kids) do
-	
-		local cn = node.kids[node.current_kid]
-		
-		-- reset fresh nodes
-		if ret == "failed" then
-			print("resetting kid "..node.current_kid)
-			bt.reset[cn.kind](cn, data)
-		end
-		
-		-- tick the current node
-		ret = bt.tick[cn.kind](cn, data)
-		print(" selector '"..node.name.."' got status ["..ret.."] from kid "..node.current_kid)
-		if ret == "running" or ret == "success" then
-			return ret
-		end
-		
-		node.current_kid = node.current_kid  + 1
-	end
-		
-	
-	return "failed"
-end
-
-
-bt.reset.sequence = function(node, data)
-	node.current_kid = -1
-end
-
-bt.tick.sequence = function(node, data) 
-	
-	local ret
-	
-	if node.current_kid  == -1 then
-		node.current_kid = 1
-		ret = "success" -- trick reset into being run
-	end
-	
-	while node.current_kid <= table.getn(node.kids) do
-	
-		local cn = node.kids[node.current_kid]
-		
-		-- reset fresh nodes
-		if ret == "success" then
-			bt.reset[cn.kind](cn, data)
-		end
-		
-		-- tick the current node
-		ret = bt.tick[cn.kind](cn, data)
-		print(" sequence '"..node.name.."' got status ["..ret.."] from kid "..node.current_kid)
-		if ret == "running" or ret == "failed" then
-			return ret
-		end
-		
-		node.current_kid = node.current_kid  + 1
-	end
-	
-	return "success"
-end
-
-
-
---  distance on x-z plane
-function distance(a, b) 
-	local x = a.x - b.x
-	local z = a.z - b.z
-	
-	return math.abs(math.sqrt(x*x + z*z))
-end
-
-
-bt.reset.find_node_near = function(node, data)
-
-	local targetpos = minetest.find_node_near(data.pos, node.dist, node.sel)
-	data.targetPos = targetpos
-end
-
-bt.tick.find_node_near = function(node, data)
+bt.tick.find_new_node_near = function(node, data)
 	if data.targetPos == nil then 
 		print("could not find node near")
 		return "failed" 
@@ -210,188 +172,229 @@ bt.tick.find_node_near = function(node, data)
 	return "success"
 end
 
-function mkFindNodeNear(sel, dist)
+
+-- this is not working
+function mkFindNewNodeNear(sel, dist, history_depth)
 	
 	return {
 		name="find node near",
-		kind="find_node_near",
+		kind="find_new_node_near",
 		dist = dist,
 		sel = sel,
+		history_depth = history_depth,
+		history = {},
+		queue = {},
 	}
 
 end
+]]
 
 
-
-bt.reset.approach = function(node, data) 
-			
-	if data.targetPos ~= nil then
-		print("Approaching target ("..data.targetPos.x..","..data.targetPos.y..","..data.targetPos.z..")")
-		data.mob.destination = data.targetPos
-	else 
-		print("Approach: targetPos is nil")
-	end
-end
-
-bt.tick.approach = function(node, data) 
-	if data.targetPos == nil then 
-		return "failed" 
-	end
+bt.register_action("Approach", {
+	tick = function(node, data)
+		if data.targetPos == nil then 
+			return "failed" 
+		end
+		
+		local d = distance(data.pos, data.targetPos)
+		
+		print("dist: "..d)
+		
+		if d <= node.dist then
+			print("arrived at target")
+			return "success"
+		end
+		
+		return "running"
+	end,
 	
-	local d = distance(data.pos, data.targetPos)
+	reset = function(node, data)
+		if data.targetPos ~= nil then
+			print("Approaching target ("..data.targetPos.x..","..data.targetPos.y..","..data.targetPos.z..")")
+			data.mob.destination = data.targetPos
+		else 
+			print("Approach: targetPos is nil")
+		end
+	end,
 	
-	print("dist: "..d)
-	
-	if d <= node.dist then
-		print("arrived at target")
-		return "success"
-	end
-	
-	return "running"
-end
+	ctor = function(dist)
+		return {
+			dist=dist,
+		}
+	end,
+})
 
 
-function mkApproach(dist)
-	
-	return {
-		name="go to",
-		kind="approach",
-		dist=dist,
-	}
 
-end
-
-function mkTryApproach(dist)
-	
-	return {
-		name="try to go to",
-		kind="try_approach",
-		dist=dist,
-	}
-
-end
-
-bt.reset.try_approach = function(node, data) 
-
-	node.last_d = nil
-
-	if data.targetPos ~= nil then
-		print("Approaching target ("..data.targetPos.x..","..data.targetPos.y..","..data.targetPos.z..")")
-		data.mob.destination = data.targetPos
-	else 
-		print("Approach: targetPos is nil")
-	end
-end
-
-bt.tick.try_approach = function(node, data) 
-	if data.targetPos == nil then 
-		return "failed" 
-	end
-	
-	local d = distance(data.pos, data.targetPos)
-	
-	if d <= node.dist then
-		print("arrived at target")
-		node.last_d = nil
-		return "success"
-	end
-	
-	
-	if node.last_d == nil then
-		node.last_d = d
-	else 
-		local dd = math.abs(node.last_d - d)
-		--print("last_d: " .. node.last_d .. " d: "..d.." dist: ".. dd)
-		if dd < .02 then
-			-- we're stuck
+bt.register_action("TryApproach", {
+	tick = function(node, data)
+		if data.targetPos == nil then 
+			return "failed" 
+		end
+		
+		local d = distance(data.pos, data.targetPos)
+		
+		if d <= node.dist then
+			print("arrived at target")
 			node.last_d = nil
+			return "success"
+		end
+		
+		
+		if node.last_d == nil then
+			node.last_d = d
+		else 
+			local dd = math.abs(node.last_d - d)
+			--print("last_d: " .. node.last_d .. " d: "..d.." dist: ".. dd)
+			if dd < .02 then
+				-- we're stuck
+				node.last_d = nil
+				return "failed"
+			end
+			
+			node.last_d = d
+		end
+
+		return "running"
+	end,
+	
+	reset = function(node, data)
+		node.last_d = nil
+
+		if data.targetPos ~= nil then
+			print("Approaching target ("..data.targetPos.x..","..data.targetPos.y..","..data.targetPos.z..")")
+			data.mob.destination = data.targetPos
+		else 
+			print("Approach: targetPos is nil")
+		end
+	end,
+	
+	ctor = function(dist)
+		return {
+			dist=dist,
+		}
+	end,
+})
+
+
+
+
+bt.register_action("Destroy", {
+	tick = function(node, data)
+		print("Destroying target")
+		if data.targetPos == nil then 
+			return "failed" 
+		end
+		
+		-- too far away
+		if distance(data.targetPos, data.pos) > data.mob.reach then
 			return "failed"
 		end
 		
-		node.last_d = d
-	end
-	
-	--print("dist: ".. math.abs(node.last_d - d))
-	
-
-	
-	return "running"
-end
-
-
-bt.reset.destroy = function(node, data) 
-	
-end
-
-bt.tick.destroy = function(node, data) 
-		print("Destroying target")
-	if data.targetPos == nil then 
-		return "failed" 
-	end
-	
-	-- too far away
-	if distance(data.targetPos, data.pos) > data.mob.reach then
-		return "failed"
-	end
-	
-	
-	minetest.set_node(data.targetPos, {name="air"})
-	
-	return "success"
-end
-
-
-function mkDestroy()
-	
-	return {
-		name="destroy",
-		kind="destroy",
+		minetest.set_node(data.targetPos, {name="air"})
 		
-	}
-
-end
-
-
+		return "success"
+	end,
+})
 
 
 
-bt.reset.bash_walls = function(node, data) 
-	
-end
 
-bt.tick.bash_walls = function(node, data) 
-
-	local pos = minetest.find_node_near(data.pos, 2, {"default:wood"})
-	if pos == nil then
-		return "failed"
-	end
+bt.register_action("BashWalls", {
+	tick = function(node, data)
+		local pos = minetest.find_node_near(data.pos, 2, {"default:wood"})
+		if pos == nil then
+			return "failed"
+		end
+			
+		minetest.set_node(pos, {name="air"})
 		
-	minetest.set_node(pos, {name="air"})
-	
-	return "success"
-end
+		return "success"
+	end,
+})
 
 
-function mkBashWalls()
-	
-	return {
-		name="destroy",
-		kind="bash_walls",
+
+
+
+bt.register_action("SetFire", {
+	tick = function(node, data)
+		print("setting fire to target")
+		if data.targetPos == nil then 
+			return "failed" 
+		end
 		
-	}
-
-end
-
-
-
-
-
-
-
-
-
-
-
-
+		-- too far away
+		if distance(data.targetPos, data.pos) > data.mob.reach then
+			return "failed"
+		end
+		
+		local pos = fire.find_pos_for_flame_around(data.targetPos)
+		if pos ~= nil then
+			minetest.set_node(pos, {name = "fire:basic_flame"})
+		end
+		
+		return "success"
+	end,
+})
 
 
+
+
+
+--[[
+bt.register_action("", {
+	tick = function(node, data)
+
+	end,
+	
+	reset = function(node, data)
+
+	end,
+	
+	ctor = function(sel, dist)
+
+	end,
+})
+]]
+
+
+
+
+
+
+
+
+
+
+
+
+--[[
+ideas:
+	RobChest(items, max) // robs nearby chests of given items
+	PutInChest(items)
+	ThrowAt(projectile, target)
+	FleeFrom(pos, distance)
+	FleeFromNodes(nodes, distance) -- gets distance away from any nodes
+	FleeFromPlayer(entity, distance)
+	ExtinguishFires() -- puts out nearby fires
+	Stomp(pos) -- plays stomping animation and eventually destroys node
+	DigNode(pos) -- digs node and adds drops to inventory
+	Attack(entity) -- seek and kill entity
+	FindNearbyEntity(entity_type)
+	HealthBelow(n)
+	HealthAbove(n)
+		^ for heat, humidity, light, hunger, breath
+	SetWaypoint(name) -- saves the current position as a named waypoint 
+	SetWaypointPos(name) -- saves the target position as a named waypoint
+	GoToWaypoint(name)
+	TossNearbyEntity() -- tosses a nearby entity
+	WaitTicks(n) -- return running for n ticks
+	SetTimer/IsExpired/HasPassed(name, [number])
+
+stack nodes to make stairs when pathfinding is broken
+travel up ladders and through doors
+
+
+
+]]
