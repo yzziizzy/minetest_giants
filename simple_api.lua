@@ -14,7 +14,9 @@ end
 -- register mob function
 function mobs:register_simple_mob(name, def)
 
-	local btdata = {}
+	local btdata = {
+		waypoints= {}
+	}
 	
 minetest.register_entity(name, {
 
@@ -94,6 +96,7 @@ minetest.register_entity(name, {
 	destination = nil,
 	
 	bt_timer = 0,
+	old_y = 0, -- some sort of weird bug
 	
 	goTo = mob_goTo,
 
@@ -107,6 +110,7 @@ minetest.register_entity(name, {
 		btdata.pos = pos
 		btdata.yaw = yaw
 		btdata.mob = self
+		btdata.inv = self.object:get_inventory()
 		
 		self.bt_timer = self.bt_timer + dtime
 		--print("bt_timer "..self.bt_timer)
@@ -120,6 +124,7 @@ minetest.register_entity(name, {
 			self.bt_timer = 0
 		end
 		
+		--self.object:set_inventory(btdata.inv)
 		btdata.lastpos = pos
 		
 

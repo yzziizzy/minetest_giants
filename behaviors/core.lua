@@ -1,4 +1,10 @@
+--[[ TODO:
 
+call/clone
+priority
+loop times until success/fail
+
+]]
 
 
 bt.register_action("Sequence", {
@@ -171,6 +177,8 @@ bt.register_action("Invert", {
 
 
 
+
+
 bt.register_action("Random", {
 	tick = function(node, data)
 		return bt.tick(node.kids[node.chosen_kid], data)
@@ -190,7 +198,95 @@ bt.register_action("Random", {
 })
 
 
+bt.register_action("UntilFailed", {
+	tick = function(node, data)
+
+		-- TODO: BUG: make sure it resets the kid the first run
+		local ret
+		while ret ~= "failed" do
+
+			ret = bt.tick(node.kid, data)
+			if ret == "running" then
+				return "running"
+			elseif ret == "success" then
+				bt.reset(node.kid, data)
+			end
+		end
+
+		return "failed"
+	end,
+	
+	reset = function(node, data)
+		bt.reset(node.kid, data)
+	end,
+	
+	--  -1 times is forever 
+	ctor = function(what)
+		return {
+			kid = what,
+		}
+	end,
+})
+ 
 
 
 
+bt.register_action("UntilSuccess", {
+	tick = function(node, data)
 
+		-- TODO: BUG: make sure it resets the kids the first run
+		local ret
+		while ret ~= "success" do
+
+			ret = bt.tick(node.kid, data)
+			if ret == "running" then
+				return "running"
+			elseif ret == "failed" then
+				bt.reset(node.kid, data)
+			end
+		end
+
+		return "success"
+	end,
+	
+	reset = function(node, data)
+		bt.reset(node.kid, data)
+	end,
+	
+	--  -1 times is forever 
+	ctor = function(what)
+		return {
+			kid = what,
+		}
+	end,
+})
+ 
+
+bt.register_action("WaitTicks", {
+	tick = function(node, data)
+		if node.current == nil then
+			node.current = 0
+		end
+	
+		node.current = node.current + 1
+		
+		if node.current > node.n then
+			node.current = 0
+			return "success"
+		end
+		
+		return "running"
+	end,
+	
+	reset = function(node, data)
+		node.current = 0
+	end,
+	
+	--  -1 times is forever 
+	ctor = function(n)
+		return {
+			n=n,
+			current=0,
+		}
+	end,
+})

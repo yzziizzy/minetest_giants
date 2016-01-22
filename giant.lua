@@ -46,21 +46,52 @@ mobs:register_simple_mob("giants:giant", {
 	},
 	
 	pre_activate = function(self, s,d)
-		self.bt = bt.Repeat("root", nil, {
-			bt.Sequence("snuff torches", {
-				bt.FindNodeNear({"default:torch"}, 20, 10),
-				bt.Selector("seek", {
-					bt.TryApproach(1.8),
-					bt.BashWalls(),
-				}),
-				bt.Destroy(),
--- 				bt.SetFire(),
-			})
-		})
+		self.bt = bt.Repeat("root", nil, {bt.Sequence("", {
+			-- build a chest and remember where it is
+			bt.FindSpotOnGround(),
+			bt.SetNode({name="default:chest"}),
+			bt.SetWaypoint("chest"),
+			
+			bt.UntilFailed(bt.Sequence("logs some trees", {
+				
+				-- find a tree
+				bt.FindNodeNear({"group:tree"}, 50),
+				bt.Approach(1.8),
+				
+				-- chop it down
+				bt.Invert(bt.UntilFailed(bt.Sequence("chop tree", {
+					bt.FindNodeNear({"group:tree"}, 3),
+					bt.DigNode(),
+					bt.WaitTicks(1),
+				}))),
+				
+				-- go back to chest
+				bt.GetWaypoint(),
+				bt.Approach(1.8),
+				bt.PutInChest('group:tree'),
+				
+			}))
+		})})
 		
 	end
 })
 
+
+--[[
+		self.bt = bt.Repeat("root", nil, {
+			bt.Sequence("snuff torches", {
+				bt.FindNewNodeNear({"default:torch"}, 20, 4),
+				bt.Selector("seek", {
+					bt.TryApproach(1.8),
+					bt.BashWalls(),
+				}),
+-- 				bt.Destroy(),
+-- 				bt.SetFire(),
+			})
+		})
+
+
+]]
 mobs:register_spawn("giants:giant", {"default:desert_sand"}, 20, 0, 7000, 2, 31000)
 
 mobs:register_egg("giants:giant", "Giant", "default_desert_sand.png", 1)
