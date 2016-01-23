@@ -118,16 +118,24 @@ bt.register_action("PutInChest", {
 			return "failed"
 		end
 		
-		local items = data.inv:remove_items("main", node.sel)
-		if items == nil then
+		local list = data.inv:get_list("main")
+		if list == nil then
 			return "success"
 		end
-		
-		local leftovers = inv:add_items("main", items) 
-		
-		if leftovers ~= nil and table.getn(leftover) > 0 then
-			return "failed"
+		local to_move = {}
+		for k,i in ipairs(list) do
+			print(i:get_name())
+			if i:get_name() == node.sel then
+				inv:add_item("main", i)
+				list[k] = nil
+				--table.insert(to_move, i)
+			end
 		end
+		
+
+		data.inv:set_list("main", list)
+		--local leftovers = inv:add_item("main", items) 
+		
 		
 		return "success"
 	end,

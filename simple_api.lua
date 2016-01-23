@@ -15,7 +15,8 @@ end
 function mobs:register_simple_mob(name, def)
 
 	local btdata = {
-		waypoints= {}
+		waypoints= {},
+		inv=minetest.create_detached_inventory("main", {}),
 	}
 	
 minetest.register_entity(name, {
@@ -30,7 +31,7 @@ minetest.register_entity(name, {
 	order = def.order or "",
 	on_die = def.on_die,
 	do_custom = def.do_custom,
-	jump_height = def.jump_height or 2,
+	jump_height = def.jump_height or 6,
 	jump_chance = def.jump_chance or 0,
 	drawtype = def.drawtype, -- DEPRECATED, use rotate instead
 	rotate = math.rad(def.rotate or 0), --  0=front, 90=side, 180=back, 270=side2
@@ -110,7 +111,7 @@ minetest.register_entity(name, {
 		btdata.pos = pos
 		btdata.yaw = yaw
 		btdata.mob = self
-		btdata.inv = self.object:get_inventory()
+		--btdata.inv = self.object:get_inventory()
 		
 		self.bt_timer = self.bt_timer + dtime
 		--print("bt_timer "..self.bt_timer)

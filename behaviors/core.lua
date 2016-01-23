@@ -290,3 +290,17 @@ bt.register_action("WaitTicks", {
 		}
 	end,
 })
+
+
+bt.register_action("Print", {
+	tick = function(node, data)
+		print(node.txt)
+		return "success"
+	end,
+	
+	ctor = function(txt)
+		return {
+			txt=txt,
+		}
+	end,
+})

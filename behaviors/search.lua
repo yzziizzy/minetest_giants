@@ -35,8 +35,10 @@ bt.register_action("FindSpotOnGround", {
 	reset = function(node, data)
 		-- really shitty quick hack
 		local targetpos = minetest.find_node_near(data.pos, 2, {name="default:dirt_with_grass"})
-		targetpos.y = targetpos.y + 1
-		data.targetPos = targetpos
+		if targetpos ~= nil then
+			targetpos.y = targetpos.y + 1
+			data.targetPos = targetpos
+		end
 	end,
 })
 

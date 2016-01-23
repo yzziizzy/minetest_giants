@@ -55,7 +55,7 @@ mobs:register_simple_mob("giants:giant", {
 			bt.UntilFailed(bt.Sequence("logs some trees", {
 				
 				-- find a tree
-				bt.FindNodeNear({"group:tree"}, 50),
+				bt.FindNodeNear({"group:tree"}, 10),
 				bt.Approach(1.8),
 				
 				-- chop it down
@@ -65,10 +65,14 @@ mobs:register_simple_mob("giants:giant", {
 					bt.WaitTicks(1),
 				}))),
 				
+				bt.Print("done chopping"),
 				-- go back to chest
-				bt.GetWaypoint(),
+				bt.GetWaypoint("chest"),
+				bt.Print("got waypoint"),
 				bt.Approach(1.8),
-				bt.PutInChest('group:tree'),
+				bt.Print("done approaching"),
+				bt.PutInChest('default:tree'),
+				bt.Print("end of loop"),
 				
 			}))
 		})})
