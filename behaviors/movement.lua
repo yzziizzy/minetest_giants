@@ -159,6 +159,10 @@ bt.register_action("SetWaypoint", {
 
 bt.register_action("GetWaypoint", {
 	tick = function(node, data)
+		if data.waypoints[node.wpname] == nil then
+			return "failed"
+		end
+	
 		data.targetPos = data.waypoints[node.wpname]
 		return "success"
 	end,

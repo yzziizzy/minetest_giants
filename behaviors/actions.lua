@@ -101,7 +101,17 @@ bt.register_action("DigNode", {
 			return "failed" 
 		end
 		
-		minetest.dig_node(data.targetPos, nil, data.mob.object)
+		local n = minetest.get_node_or_nil(data.targetPos)
+		if n == nil then
+			return "success"
+		end
+		
+		local drops = minetest.get_node_drops(n.name)
+		for _,i in ipairs(drops) do
+			data.inv:add_item("main", i)
+		end
+		
+		minetest.remove_node(data.targetPos)
 		
 		return "success"
 	end,
@@ -126,6 +136,7 @@ bt.register_action("PutInChest", {
 		for k,i in ipairs(list) do
 			print(i:get_name())
 			if i:get_name() == node.sel then
+				print("adding item")
 				inv:add_item("main", i)
 				list[k] = nil
 				--table.insert(to_move, i)

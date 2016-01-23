@@ -61,7 +61,7 @@ minetest.register_node("mobs:spawner", {
 -- spawner abm
 minetest.register_abm({
 	nodenames = {"mobs:spawner"},
-	interval = 10,
+	interval = 10000,
 	chance = 4,
 	catch_up = false,
 

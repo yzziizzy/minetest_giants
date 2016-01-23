@@ -19,6 +19,8 @@ function mobs:register_simple_mob(name, def)
 		inv=minetest.create_detached_inventory("main", {}),
 	}
 	
+ 	btdata.inv:set_size("main", 9)
+	
 minetest.register_entity(name, {
 
 	stepheight = def.stepheight or 0.6,
@@ -112,11 +114,13 @@ minetest.register_entity(name, {
 		btdata.yaw = yaw
 		btdata.mob = self
 		--btdata.inv = self.object:get_inventory()
+		--btdata.inv:set_size("main", 9)
+		--btdata.inv:add_item("main", "default:tree 50")
 		
 		self.bt_timer = self.bt_timer + dtime
 		--print("bt_timer "..self.bt_timer)
 		
-		if self.bt_timer > 1 then
+		if self.bt_timer > 2 then
 		
 			print("\n<<< start >>>")
 			bt.tick(self.bt, btdata)
