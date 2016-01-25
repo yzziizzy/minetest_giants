@@ -103,23 +103,17 @@ dofile(path..'/behaviors/actions.lua')
 --[[
 ideas:
 	RobChest(items, max) // robs nearby chests of given items
-	PutInChest(items)
 	ThrowAt(projectile, target)
 	FleeFrom(pos, distance)
 	FleeFromNodes(nodes, distance) -- gets distance away from any nodes
 	FleeFromPlayer(entity, distance)
 	Stomp(pos) -- plays stomping animation and eventually destroys node
-	DigNode(pos) -- digs node and adds drops to inventory
 	Attack(entity) -- seek and kill entity
 	FindNearbyEntity(entity_type)
 	HealthBelow(n)
 	HealthAbove(n)
 		^ for heat, humidity, light, hunger, breath
-	SetWaypoint(name) -- saves the current position as a named waypoint 
-	SetWaypointPos(name) -- saves the target position as a named waypoint
-	GoToWaypoint(name)
 	TossNearbyEntity() -- tosses a nearby entity
-	WaitTicks(n) -- return running for n ticks
 	SetTimer/IsExpired/HasPassed(name, [number])
 	ChestHasItems(items)
 
@@ -135,6 +129,29 @@ findnonfullchest
 *findAvailableChest
 craftItem
 
+is target further/closer than x
 
+ search for vertical stacks of x height
+try to stack nodes to x height
+forceload block
+biomes
+node level
+line of sight
+eat
+drop/collect nearby items
+rotate node
+set time of day
+jump/crouch
+change top-level tree
+try approach should fail if the node is directly above
+build ladder to
+drop items from inv
+get surface node near
+get node(a) x distance away from any other node(b) 
+get random node in area
+is the entity inv full
+add/remove node to visited list
+
+try approach, with a bt kid that's called when progress slows 
 
 ]]

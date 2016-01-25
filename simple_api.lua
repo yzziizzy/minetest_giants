@@ -16,7 +16,12 @@ function mobs:register_simple_mob(name, def)
 
 	local btdata = {
 		waypoints= {},
+		counters={},
 		inv=minetest.create_detached_inventory("main", {}),
+		
+		history={},
+		history_queue={},
+		history_depth=20,
 	}
 	
  	btdata.inv:set_size("main", 9)
@@ -278,7 +283,7 @@ minetest.register_entity(name, {
 			end
 
 			-- anyone but standing npc's can move along
-			if dist > .1 then
+			if dist > (self.approachDistance or .1) then
 
 				if (self.jump
 				and get_velocity(self) <= 0.5

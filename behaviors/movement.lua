@@ -22,6 +22,7 @@ bt.register_action("Approach", {
 		if data.targetPos ~= nil then
 			print("Approaching target ("..data.targetPos.x..","..data.targetPos.y..","..data.targetPos.z..")")
 			data.mob.destination = data.targetPos
+			data.mob.approachDistance = node.dist
 		else 
 			print("Approach: targetPos is nil")
 		end
@@ -74,6 +75,7 @@ bt.register_action("TryApproach", {
 		if data.targetPos ~= nil then
 			print("Approaching target ("..data.targetPos.x..","..data.targetPos.y..","..data.targetPos.z..")")
 			data.mob.destination = data.targetPos
+			data.mob.approachDistance = node.dist
 		else 
 			print("Approach: targetPos is nil")
 		end

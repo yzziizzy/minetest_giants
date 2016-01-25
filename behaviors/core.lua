@@ -103,7 +103,6 @@ bt.register_action("Selector", {
 })
 
 
-
 bt.register_action("Repeat", {
 	tick = function(node, data)
 		--tprint(node)
@@ -290,6 +289,43 @@ bt.register_action("WaitTicks", {
 		}
 	end,
 })
+
+
+bt.register_action("Counter", {
+	tick = function(node, data)
+		
+		if data.counters[node.cname] == nil then
+			data.counters[node.cname] = 0
+		end
+		
+		if node.op == "set" then
+			data.counters[node.cname] = node.val
+		elseif node.op == "inc" then
+			data.counters[node.cname] = data.counters[node.cname] + 1
+		elseif node.op == "dec" then
+			data.counters[node.cname] = data.counters[node.cname] - 1
+		elseif node.op == "add" then
+			data.counters[node.cname] = data.counters[node.cname] + node.val
+		elseif node.op == "sub" then
+			data.counters[node.cname] = data.counters[node.cname] - node.val
+		elseif node.op == "eq" and data.counters[node.cname] ~= node.val then
+			return "failed"
+		elseif node.op == "ne" and data.counters[node.cname] == node.val then
+			return "failed"
+		end
+		
+		return "success"
+	end,
+	
+	ctor = function(name, op, val)
+		return {
+			cname = name,
+			op = op,
+			val = val,
+		}
+	end,
+})
+
 
 
 bt.register_action("Print", {

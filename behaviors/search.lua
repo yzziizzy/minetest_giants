@@ -71,30 +71,27 @@ bt.register_action("FindNewNodeNear", {
 		
 		for _,p in ipairs(list) do
 			local ps = p.x.."_"..p.y.."_"..p.z
-			if node.history[ps] ~= true then
+			if data.history[ps] ~= true then
 				
-				node.history[ps] = true
+				data.history[ps] = true
 				data.targetPos = p
 				
-				table.insert(node.queue, ps)
+				table.insert(data.history_queue, ps)
 				break
 			end
 		end
 		
-		local len = table.getn(node.queue)
-		if len >= node.history_depth then
-			node.history[node.queue[1]] = nil
-			table.remove(node.queue, 1)
+		local len = table.getn(data.history_queue)
+		if len >= data.history_depth then
+			data.history[data.history_queue[1]] = nil
+			table.remove(data.history_queue, 1)
 		end
 	end,
 	
-	ctor = function(sel, dist, history_depth)
+	ctor = function(sel, dist)
 		return {
 			dist = dist,
 			sel = sel,
-			history_depth = history_depth,
-			history = {},
-			queue = {},
 		}
 	end,
 })
@@ -137,4 +134,64 @@ bt.register_action("FindPath", {
 	end,
 })
 
+ 
+bt.register_action("FindItemNear", {
+	tick = function(node, data)
+		
+		if data.targetPos == nil and data.targetEntity == nil then
+			return "failed"
+		end
+		
+		return "success"
+	end,
+	
+	reset = function(node, data)
+		data.targetPos = nil
+		data.targetEntity = nil
+	
+		local objects = minetest.get_objects_inside_radius(data.pos, node.dist)
+		for _,object in ipairs(objects) do
+			--tprint(object:get_luaentity())
+			if not object:is_player() and object:get_luaentity() and object:get_luaentity().name == "__builtin:item" then
+				if object:get_luaentity().itemstring == node.sel then
+					data.targetPos = object:getpos()
+					data.targetEntity = object
+					return
+				end
+			end
+		end
+	end,
+	
+	ctor = function(sel, dist)
+		return {
+			dist = dist,
+			sel = sel,
+		}
+	end,
+})
+
+
+
+bt.register_action("AddToVisited", {
+	tick = function(node, data)
+		if data.targetPos == nil then 
+			return "success" 
+		end
+		
+		local p = data.targetPos
+		local ps = p.x.."_"..p.y.."_"..p.z
+		if data.history[ps] ~= true then
+			data.history[ps] = true
+			table.insert(data.history_queue, ps)
+			
+			local len = table.getn(data.history_queue)
+			if len >= data.history_depth then
+				data.history[data.history_queue[1]] = nil
+				table.remove(data.history_queue, 1)
+			end
+		end
+		
+		return "success"
+	end,
+})
 

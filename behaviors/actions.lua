@@ -134,8 +134,7 @@ bt.register_action("PutInChest", {
 		end
 		local to_move = {}
 		for k,i in ipairs(list) do
-			print(i:get_name())
-			if i:get_name() == node.sel then
+			if node.sel == nil or i:get_name() == node.sel then
 				print("adding item")
 				inv:add_item("main", i)
 				list[k] = nil
@@ -154,6 +153,73 @@ bt.register_action("PutInChest", {
 	ctor = function(sel)
 		return {
 			sel = sel
+		}
+	end,
+})
+
+
+
+bt.register_action("Die", {
+	tick = function(node, data)
+		print("Dying now")
+		
+		data.mob.object:remove()
+		
+		return "success"
+	end,
+})
+
+bt.register_action("PickUpNearbyItems", {
+	tick = function(node, data)
+		
+		local objects = minetest.get_objects_inside_radius(data.pos, data.mob.reach)
+		for _,object in ipairs(objects) do
+			if not object:is_player() and object:get_luaentity() and object:get_luaentity().name == "__builtin:item" then
+				if object:get_luaentity().itemstring == node.sel then
+					if data.inv:room_for_item("main", ItemStack(object:get_luaentity().itemstring)) then
+						data.inv:add_item("main", ItemStack(object:get_luaentity().itemstring))
+						object:get_luaentity().itemstring = ""
+						object:remove()
+					end
+				end
+			end
+		end
+		
+		
+		return "success"
+	end,
+	
+	ctor = function(sel)
+		return {
+			sel = sel
+		}
+	end,
+})
+
+
+bt.register_action("Punch", {
+	tick = function(node, data)
+		print("Punching with " .. node.tool)
+		
+		if data.targetPos == nil then 
+			return "failed" 
+		end
+		
+		local ret = data.mob.object:set_wielded_item(node.tool)
+		if ret == false then
+			print("failed to set tool")
+			return "failed"
+		end
+		local n = minetest.get_node(data.targetPos)
+		minetest.node_punch(data.targetPos, n, data.mob.object) -- broken
+		--minetest.punch_node(data.targetPos)
+		
+		return "running"
+	end,
+	
+	ctor = function(tool)
+		return {
+			tool=tool
 		}
 	end,
 })
