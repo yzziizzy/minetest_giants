@@ -151,6 +151,48 @@ bt.register_action("Repeat", {
  
 
 
+bt.register_action("Succeed", {
+	tick = function(node, data)
+		local ret = bt.tick(node.kid, data)
+		if ret == "running" then
+			return "running"
+		else
+			return "success"
+		end
+	end,
+	
+	reset = function(node, data)
+		bt.reset(node.kid, data)
+	end,
+	
+	ctor = function(kid)
+		return {
+			kid=kid,
+		}
+	end,
+})
+
+bt.register_action("Fail", {
+	tick = function(node, data)
+		local ret = bt.tick(node.kid, data)
+		if ret == "running" then
+			return "running"
+		else
+			return "failed"
+		end
+	end,
+	
+	reset = function(node, data)
+		bt.reset(node.kid, data)
+	end,
+	
+	ctor = function(kid)
+		return {
+			kid=kid,
+		}
+	end,
+})
+
 bt.register_action("Invert", {
 	tick = function(node, data)
 		local ret = bt.tick(node.kid, data)

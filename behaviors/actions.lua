@@ -97,12 +97,15 @@ bt.register_action("ExtinguishFire", {
 
 bt.register_action("DigNode", {
 	tick = function(node, data)
+		
 		if data.targetPos == nil then 
+			print("!   [DigNode] no target position\n")
 			return "failed" 
 		end
 		
 		local n = minetest.get_node_or_nil(data.targetPos)
 		if n == nil then
+			print("!   [DigNode] node is nil\n")
 			return "success"
 		end
 		
@@ -120,16 +123,19 @@ bt.register_action("DigNode", {
 bt.register_action("PutInChest", {
 	tick = function(node, data)
 		if data.targetPos == nil then
+			print("!   [PutInChest] no target position\n") 
 			return "failed"
 		end
 
 		local inv = minetest.get_inventory({type="node", pos=data.targetPos}) 
 		if inv == nil then 
+			print("!   [PutInChest] failed to get inv\n") 
 			return "failed"
 		end
 		
 		local list = data.inv:get_list("main")
 		if list == nil then
+			print("@   [PutInChest] main list is nil\n") 
 			return "success"
 		end
 		local to_move = {}

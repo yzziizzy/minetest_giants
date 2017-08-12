@@ -103,6 +103,7 @@ bt.register_action("CarryingItems", {
 	end,
 })
 
+
 bt.register_action("NodeIsFull", {
 	tick = function(node, data)
 		if data.targetPos == nil then

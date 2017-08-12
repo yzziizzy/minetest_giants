@@ -85,6 +85,7 @@ bt.reset = function(node, data)
 end
 
 bt.tick = function(node, data)
+	--return
 	return bt_fns.tick[node.kind](node, data)
 end
 
