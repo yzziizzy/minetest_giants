@@ -158,6 +158,48 @@ local build_house = function(item)
 	})
 end
 
+local build_campfire = function() 
+	return bt.Sequence("build campfire", {
+		bt.FindSpotOnGround(),
+		bt.SetWaypoint("campfire"),
+
+		bt.FindRegionAround(2),
+		dig_region({"group:soil", "group:plant", "group:sand"}),
+		fill_region({name="default:gravel"}),
+
+		bt.GetWaypoint("campfire"),
+		
+		bt.DigNode(),
+		bt.SetNode({name="default:coalblock"}),
+		bt.WaitTicks(1),
+	
+		bt.MoveTarget({x=1, y=1, z=0}),
+		bt.SetNode({name="stairs:slab_cobble"}),
+		bt.WaitTicks(1),
+		
+		bt.MoveTarget({x=-1, y=0, z=1}),
+		bt.SetNode({name="stairs:slab_cobble"}),
+		bt.WaitTicks(1),
+		
+		bt.MoveTarget({x=-1, y=0, z=-1}),
+		bt.SetNode({name="stairs:slab_cobble"}),
+		bt.WaitTicks(1),
+		
+		bt.MoveTarget({x=1, y=0, z=-1}),
+		bt.SetNode({name="stairs:slab_cobble"}),
+		bt.WaitTicks(1),
+		
+		bt.MoveTarget({x=0, y=0, z=1}),
+		bt.SetNode({name="fire:permanent_flame"}),
+
+		
+		
+		bt.Die()
+	})
+
+end
+
+
 local quarry = function(item) 
 	return bt.Sequence("", {
 		-- build a chest and remember where it is
@@ -331,6 +373,10 @@ end)
 
 make_giant("builder", function() 
 	return build_house()
+end)
+
+make_giant("founder", function() 
+	return build_campfire()
 end)
 
 --[[

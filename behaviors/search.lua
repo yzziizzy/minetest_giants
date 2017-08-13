@@ -485,3 +485,33 @@ bt.register_action("MoveRegion", {
 		}
 	end,
 })
+
+
+
+
+bt.register_action("MoveTarget", {
+	tick = function(node, data)
+		if data.targetPos == nil then 
+			print("no active target")
+			return "failed" 
+		end
+		
+		return "success"
+	end,
+	
+	reset = function(node, data)
+		if data.targetPos == nil then -- game restarts cause this
+			return
+		end
+		
+		data.targetPos.x = data.targetPos.x + node.scale.x
+		data.targetPos.y = data.targetPos.y + node.scale.y
+		data.targetPos.z = data.targetPos.z + node.scale.z
+	end,
+	
+	ctor = function(scale)
+		return {
+			scale = scale,
+		}
+	end,
+})
