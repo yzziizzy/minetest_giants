@@ -299,6 +299,120 @@ bt.register_action("FindNodeInRange", {
 })
 
 
+bt.register_action("FindPerimeterNodeInRegion", {
+	tick = function(node, data)
+		if data.region == nil or node.regionEmpty == true then 
+			print("could not find edge node in active region")
+			return "failed" 
+		end
+		
+		return "success"
+	end,
+	
+	reset = function(node, data)
+		local r = data.region;
+		if r == nil then -- game restarts cause this
+			return
+		end
+		
+		node.regionEmpty = false
+		
+		local list
+		
+		-- first try the x+ edge
+		list = minetest.find_nodes_in_area({
+			x= r.max.x,
+			y= r.min.y,
+			z= r.min.z,
+		}, {
+			x= r.max.x,
+			y= r.max.y,
+			z= r.max.z,
+		}, node.sel)
+		if list ~= nil and #list > 0 then
+			local n = list[1]
+			local node = minetest.get_node(n)
+			print("name: " .. node.name .. "\n")
+			print("targeting node ["..n.x..", "..n.y..", "..n.z.."]\n")
+			data.targetPos = n
+			
+			return
+		end 
+
+		-- next try the z+ edge
+		list = minetest.find_nodes_in_area({
+			x= r.min.x,
+			y= r.min.y,
+			z= r.max.z,
+		}, {
+			x= r.max.x,
+			y= r.max.y,
+			z= r.max.z,
+		}, node.sel)
+		if list ~= nil and #list > 0 then
+			local n = list[1]
+			local node = minetest.get_node(n)
+			print("name: " .. node.name .. "\n")
+			print("targeting node ["..n.x..", "..n.y..", "..n.z.."]\n")
+			data.targetPos = n
+			
+			return
+		end 
+		
+		
+		-- next try the x- edge
+		list = minetest.find_nodes_in_area({
+			x= r.min.x,
+			y= r.min.y,
+			z= r.min.z,
+		}, {
+			x= r.min.x,
+			y= r.max.y,
+			z= r.max.z,
+		}, node.sel)
+		if list ~= nil and #list > 0 then
+			local n = list[1]
+			local node = minetest.get_node(n)
+			print("name: " .. node.name .. "\n")
+			print("targeting node ["..n.x..", "..n.y..", "..n.z.."]\n")
+			data.targetPos = n
+			
+			return
+		end 
+		
+		-- lastly try the z- edge
+		list = minetest.find_nodes_in_area({
+			x= r.min.x,
+			y= r.min.y,
+			z= r.min.z,
+		}, {
+			x= r.max.x,
+			y= r.max.y,
+			z= r.min.z,
+		}, node.sel)
+		if list ~= nil and #list > 0 then
+			local n = list[1]
+			local node = minetest.get_node(n)
+			print("name: " .. node.name .. "\n")
+			print("targeting node ["..n.x..", "..n.y..", "..n.z.."]\n")
+			data.targetPos = n
+			
+			return
+		end 
+		
+		-- no nodes left
+		node.regionEmpty = true
+	end,
+	
+	ctor = function(sel)
+		return {
+			sel = sel,
+			regionEmpty = false,
+		}
+	end,
+})
+
+
 
 
 bt.register_action("ScaleRegion", {

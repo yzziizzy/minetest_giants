@@ -56,6 +56,7 @@ local dig_region = function(item)
 			-- chop it down
 			bt.Invert(bt.UntilFailed(bt.Sequence("dig hole", {
 				bt.FindNodeInRange(item),
+				bt.Approach(3),
 				bt.DigNode(),
 				bt.WaitTicks(1),
 			}))),
@@ -70,7 +71,7 @@ local dig_hole = function(item)
 		-- find a place for a hole
 		bt.FindSpotOnGround(),
 		bt.SetWaypoint("hole"),
-		bt.FindRegionAround(2),
+		bt.FindRegionAround(4),
 		
 		dig_region(item),
 		
@@ -81,6 +82,77 @@ local dig_hole = function(item)
 		bt.ScaleRegion({x=-1, y=0, z=-1}),
 		bt.MoveRegion({x=0, y=-1, z=0}),
 		dig_region(item),
+		
+		bt.Die(),
+	})
+end
+
+
+local fill_region = function(item)
+	return bt.Sequence("", {
+
+		bt.Invert(bt.UntilFailed(bt.Sequence("fill region", {
+			
+			bt.FindNodeInRange({"air"}),
+			bt.Approach(2),
+			
+			-- chop it down
+			bt.Invert(bt.UntilFailed(bt.Sequence("fill region", {
+				bt.FindNodeInRange({"air"}),
+				bt.Approach(3),
+				bt.SetNode(item),
+				bt.WaitTicks(1),
+			}))),
+			
+			bt.Print("end of loop"),
+		})))
+	})
+end
+
+local fence_region = function(item)
+	return bt.Sequence("", {
+
+		bt.Invert(bt.UntilFailed(bt.Sequence("fill region", {
+			
+			bt.FindPerimeterNodeInRegion({"air"}),
+			bt.Approach(2),
+			
+			-- chop it down
+			bt.Invert(bt.UntilFailed(bt.Sequence("fill region", {
+				bt.FindPerimeterNodeInRegion({"air"}),
+				bt.Approach(3),
+				bt.SetNode(item);
+				bt.WaitTicks(1),
+			}))),
+			
+			bt.Print("end of loop"),
+		})))
+	})
+end
+
+local build_house = function(item) 
+	return bt.Sequence("", {
+		-- find a place for a hole
+		bt.FindSpotOnGround(),
+		bt.SetWaypoint("house"),
+		bt.FindRegionAround(3),
+		
+		bt.MoveRegion({x=0, y=1, z=0}),
+		fill_region({name="default:cobble"}),
+		
+		bt.MoveRegion({x=0, y=1, z=0}),
+		fence_region({name="default:tree"}),
+
+		bt.MoveRegion({x=0, y=1, z=0}),
+		fence_region({name="default:tree"}),
+		
+		bt.ScaleRegion({x=-1, y=0, z=-1}),
+		bt.MoveRegion({x=0, y=1, z=0}),
+		fill_region({name="default:wood"}),
+
+		bt.ScaleRegion({x=-1, y=0, z=-1}),
+		bt.MoveRegion({x=0, y=1, z=0}),
+		fill_region({name="default:wood"}),
 		
 		bt.Die(),
 	})
@@ -255,6 +327,10 @@ end)
 
 make_giant("digger", function() 
 	return dig_hole({"default:dirt", "default:dirt_with_grass", "default:sand", "default:stone"})
+end)
+
+make_giant("builder", function() 
+	return build_house()
 end)
 
 --[[
