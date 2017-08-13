@@ -13,7 +13,7 @@ end
 
 -- register mob function
 function mobs:register_simple_mob(name, def)
-
+--[[
 	local btdata = {
 		waypoints= {},
 		counters={},
@@ -24,7 +24,7 @@ function mobs:register_simple_mob(name, def)
 		history_depth=20,
 	}
 	
- 	btdata.inv:set_size("main", 9)
+ 	btdata.inv:set_size("main", 9)]]
 	
 minetest.register_entity(name, {
 
@@ -109,12 +109,14 @@ minetest.register_entity(name, {
 	goTo = mob_goTo,
 
 	bt = nil,
+	btData = nil,
 
 	on_step = function(self, dtime)
-
+		local btdata = self.btData
+	
 		local pos = self.object:getpos()
 		local yaw = self.object:getyaw() or 0
-
+	
 		btdata.pos = pos
 		btdata.yaw = yaw
 		btdata.mob = self
@@ -128,8 +130,18 @@ minetest.register_entity(name, {
 		if self.bt_timer > 2 then
 		
 			print("\n<<< start >>>")
+			
+			-- inventories cannot be serialized and cause the game to crash if
+			-- placed in the entity's table
+			local inv = minetest.get_inventory({type="detached", name=btdata.id})
+			btdata.inv = inv
+			
 			bt.tick(self.bt, btdata)
 			print("<<< end >>>\n")
+			
+			-- so clear it out after running the behavior trees
+			btdata.inv = nil
+			-- the inventory exists on its own
 		
 			self.bt_timer = 0
 		end
@@ -380,8 +392,22 @@ minetest.register_entity(name, {
 	end,
 
 	on_activate = function(self, staticdata, dtime_s)
+		self.btData = {
+			id= name..":"..math.random(1, 2000000000), 
+			waypoints= {},
+			counters={},
+			
+			history={},
+			history_queue={},
+			history_depth=20,
+		}
 		
-	
+		local btdata = self.btData
+		
+		print(btdata.id)
+		local inventory = minetest.create_detached_inventory(btdata.id, {})
+		inventory:set_size("main", 9)
+		
 		btdata.lastpos = self.object:getpos()
 	
 		if type(def.pre_activate) == "function" then

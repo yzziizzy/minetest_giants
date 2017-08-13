@@ -27,11 +27,13 @@ local lumberjack = function()
 			}))),
 			bt.SetWaypointHere("tree"),
 			
+			--[[ broken
 			bt.Succeed(bt.Sequence("pick up saplings", {
 				bt.FindItemNear("group:sapling", 20),
 				bt.PickUpNearbyItems("group:sapling"),
 			})),
-	                 	
+			]]
+			
 			-- put wood in chest
 			bt.GetWaypoint("chest"),
 			bt.Approach(2),
