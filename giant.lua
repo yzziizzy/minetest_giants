@@ -2,9 +2,12 @@
 
 local lumberjack = function() 
 	return bt.Sequence("", {
+		bt.Succeed(bt.FindGroupCampfire()),
+		
 		-- build a chest and remember where it is
-		bt.FindSpotOnGround(),
-		bt.SetNode({name="default:chest"}),
+		--bt.FindSpotOnGround(),
+		--bt.SetNode({name="default:chest"}),
+		bt.GetGroupWaypoint("lumber_chest"),
 		bt.SetWaypoint("chest"),
 		
 		bt.UntilFailed(bt.Sequence("logs some trees", {
@@ -21,18 +24,22 @@ local lumberjack = function()
 			
 			-- chop it down
 			bt.Invert(bt.UntilFailed(bt.Sequence("chop tree", {
+				bt.Wield("default:axe_steel"),
+				bt.Animate("punch"),
 				bt.FindNodeNear({"group:tree"}, 3),
 				bt.DigNode(),
 				bt.WaitTicks(1),
 			}))),
 			bt.SetWaypointHere("tree"),
+
+			bt.Wield(""),
+
 			
-			--[[ broken
 			bt.Succeed(bt.Sequence("pick up saplings", {
-				bt.FindItemNear("group:sapling", 20),
-				bt.PickUpNearbyItems("group:sapling"),
+				--bt.FindItemNear("group:sapling", 20),
+				bt.PickUpNearbyItems("group:sapling", 5),
 			})),
-			]]
+			
 			
 			-- put wood in chest
 			bt.GetWaypoint("chest"),
@@ -40,8 +47,8 @@ local lumberjack = function()
 			bt.PutInChest(nil),
 			
                                   
-	                                                   
-			bt.Print("end of loop"),
+			bt.WaitTicks(1),
+			bt.Print("end of loop \n"),
 		}))
 	})
 end
@@ -59,6 +66,7 @@ local dig_region = function(item)
 			bt.Invert(bt.UntilFailed(bt.Sequence("dig hole", {
 				bt.FindNodeInRange(item),
 				bt.Approach(3),
+				bt.Animate("punch"),
 				bt.DigNode(),
 				bt.WaitTicks(1),
 			}))),
@@ -70,6 +78,8 @@ end
 
 local dig_hole = function(item) 
 	return bt.Sequence("", {
+		bt.Succeed(bt.FindGroupCampfire()),
+		
 		-- find a place for a hole
 		bt.FindSpotOnGround(),
 		bt.SetWaypoint("hole"),
@@ -102,6 +112,7 @@ local fill_region = function(item)
 			bt.Invert(bt.UntilFailed(bt.Sequence("fill region", {
 				bt.FindNodeInRange({"air"}),
 				bt.Approach(3),
+				bt.Animate("punch"),
 				bt.SetNode(item),
 				bt.WaitTicks(1),
 			}))),
@@ -123,6 +134,7 @@ local fence_region = function(item)
 			bt.Invert(bt.UntilFailed(bt.Sequence("fill region", {
 				bt.FindPerimeterNodeInRegion({"air"}),
 				bt.Approach(3),
+				bt.Animate("punch"),
 				bt.SetNode(item);
 				bt.WaitTicks(1),
 			}))),
@@ -134,6 +146,8 @@ end
 
 local build_house = function(item) 
 	return bt.Sequence("", {
+		bt.Succeed(bt.FindGroupCampfire()),
+	
 		-- find a place for a hole
 		bt.FindSpotOnGround(),
 		bt.SetWaypoint("house"),
@@ -160,17 +174,24 @@ local build_house = function(item)
 	})
 end
 
+
+
+
+
 local build_campfire = function() 
 	return bt.Sequence("build campfire", {
 		bt.FindSpotOnGround(),
 		bt.SetWaypoint("campfire"),
 
-		bt.FindRegionAround(2),
-		dig_region({"group:soil", "group:plant", "group:sand"}),
-		fill_region({name="default:gravel"}),
+-- 		bt.FindRegionAround(2),
+-- 		dig_region({"group:soil", "group:plant", "group:sand"}),
+-- 		fill_region({name="default:gravel"}),
 
 		bt.GetWaypoint("campfire"),
-		
+		bt.MoveTarget({x=0, y=-1, z=0}),
+
+		bt.Animate("punch"),
+	
 		bt.DigNode(),
 		bt.SetNode({name="default:coalblock"}),
 		bt.WaitTicks(1),
@@ -192,18 +213,65 @@ local build_campfire = function()
 		bt.WaitTicks(1),
 		
 		bt.MoveTarget({x=0, y=0, z=1}),
-		bt.SetNode({name="fire:permanent_flame"}),
-
+		bt.SetNode({name="giants:campfire"}),
 		
-		
-		bt.Die()
+		bt.FindGroupCampfire(),
+		bt.SetRole("founder"),
 	})
 
 end
 
 
+local spawn_at_campfire = function(role)
+	return bt.Sequence("spawn at campfire", {
+		bt.PushTarget(),
+		bt.GetGroupWaypoint("spawnpoint"),
+		bt.MoveTargetRandom({x=1, y=0, z=1}),
+		bt.Spawn(role),
+		bt.PopTarget(),
+	})
+end
+
+
+local found_village = function() 
+	return bt.Sequence("founding village", {
+		build_campfire(),
+		
+		bt.MoveTarget({x=2, y=0, z=2}),
+		bt.SetGroupWaypoint("spawnpoint"),
+		
+		bt.MoveTarget({x=-5, y=0, z=1}),
+		bt.SetGroupWaypoint("lumber_chest"),
+		bt.SetNode({name="default:chest"}),
+		
+		bt.MoveTarget({x=0, y=0, z=-6}),
+		bt.SetGroupWaypoint("stone_chest"),
+		bt.SetNode({name="default:chest"}),
+		
+		bt.MoveTarget({x=6, y=0, z=6}),
+		bt.SetGroupWaypoint("food_chest"),
+		bt.SetNode({name="default:chest"}),
+		
+		bt.WaitTicks(1),
+		spawn_at_campfire("lumberjack"),
+		
+		bt.WaitTicks(2),
+		spawn_at_campfire("lumberjack"),
+		
+		--build_house(),
+				
+		bt.Die(),
+	})
+end
+
+
+
+
+
 local quarry = function(item) 
 	return bt.Sequence("", {
+		bt.Succeed(bt.FindGroupCampfire()),
+	
 		-- build a chest and remember where it is
 		bt.FindSpotOnGround(),
 		bt.SetNode({name="default:chest"}),
@@ -224,6 +292,7 @@ local quarry = function(item)
 			-- chop it down
 			bt.Counter("foo", "set", 0),
 			bt.Invert(bt.UntilFailed(bt.Sequence("chop tree", {
+				bt.Animate("punch"),
 				bt.FindNodeNear(item, 2),
 				bt.DigNode(),
 				bt.WaitTicks(1),
@@ -378,7 +447,7 @@ make_giant("builder", function()
 end)
 
 make_giant("founder", function() 
-	return build_campfire()
+	return found_village()
 end)
 
 --[[

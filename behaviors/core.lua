@@ -369,6 +369,49 @@ bt.register_action("Counter", {
 })
 
 
+bt.register_action("Animate", {
+	tick = function(node, data)
+		set_animation(data.mob, node.anim)
+		return "success"
+	end,
+	
+	ctor = function(anim) return { anim= anim } end,
+})
+
+bt.register_action("Wield", {
+	tick = function(node, data)
+		data.mob.object:set_wielded_item(node.item)
+		return "success"
+	end,
+	
+	ctor = function(item) return { item= item } end,
+})
+
+
+bt.register_action("SetRole", {
+	tick = function(node, data)
+		data.role = node.role
+		
+		if data.groupID ~= nil then
+			local gd = giants.groupData[data.groupID]
+			if gd == nil then
+				return "success"
+			end
+			
+			if gd.members[data.mob.inv_id] == nil then
+				gd.members[data.mob.inv_id] = {}
+			end
+			
+			gd.members[data.mob.inv_id].role = node.role
+		end
+		
+		return "success"
+	end,
+	
+	ctor = function(role) return { role= role } end,
+})
+
+
 
 bt.register_action("Print", {
 	tick = function(node, data)

@@ -133,7 +133,7 @@ minetest.register_entity(name, {
 			
 			-- inventories cannot be serialized and cause the game to crash if
 			-- placed in the entity's table
-			local inv = minetest.get_inventory({type="detached", name=btdata.id})
+			local inv = minetest.get_inventory({type="detached", name=self.inv_id})
 			btdata.inv = inv
 			
 			bt.tick(self.bt, btdata)
@@ -393,20 +393,22 @@ minetest.register_entity(name, {
 
 	on_activate = function(self, staticdata, dtime_s)
 		self.btData = {
-			id= name..":"..math.random(1, 2000000000), 
+			groupID = "default",
+			
 			waypoints= {},
 			counters={},
 			
 			history={},
 			history_queue={},
 			history_depth=20,
+			
+			posStack={},
 		}
 		
 		local btdata = self.btData
 		
-		print(btdata.id)
-		local inventory = minetest.create_detached_inventory(btdata.id, {})
-		inventory:set_size("main", 9)
+		self.inv_id= name..":"..math.random(1, 2000000000)
+		--print(btdata.id)
 		
 		btdata.lastpos = self.object:getpos()
 	
@@ -431,6 +433,10 @@ minetest.register_entity(name, {
 			return
 		end
 
+		local inventory = minetest.create_detached_inventory(self.inv_id, {})
+		inventory:set_size("main", 9)
+
+		
 		-- select random texture, set model and size
 		if not self.base_texture then
 
@@ -521,7 +527,12 @@ minetest.register_entity(name, {
 		self.attack = nil
 		self.following = nil
 		self.state = "stand"
-
+		
+		if self.btData ~= nil then
+			self.btData.inv = nil -- just in case
+			self.btData.mob = nil -- just in case
+		end
+		
 		-- used to rotate older mobs
 		if self.drawtype
 		and self.drawtype == "side" then

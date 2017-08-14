@@ -177,4 +177,61 @@ bt.register_action("GetWaypoint", {
 })
 
 
+bt.register_action("SetGroupWaypoint", {
+	tick = function(node, data)
+		if data.targetPos == nil or data.groupID == nil or giants.groupData[data.groupID] == nil then 
+			return "failed" 
+		end
+		
+		giants.groupData[data.groupID].waypoints[node.wpname] = data.targetPos
+		return "success"
+	end,
+	
+	ctor = function(name)
+		return {
+			wpname=name or "_"
+		}
+	end,
+})
+
+bt.register_action("GetGroupWaypoint", {
+	tick = function(node, data)
+		if giants.groupData[data.groupID].waypoints[node.wpname] == nil then
+			return "failed"
+		end
+	
+		data.targetPos = giants.groupData[data.groupID].waypoints[node.wpname]
+		return "success"
+	end,
+	
+	ctor = function(name)
+		return {
+			wpname=name or "_"
+		}
+	end,
+})
+
+
+
+bt.register_action("PushTarget", {
+	tick = function(node, data)
+		if data.targetPos == nil then
+			return "failed"
+		end
+	
+		table.insert(data.posStack, data.targetPos)
+		return "success"
+	end,
+})
+
+bt.register_action("PopTarget", {
+	tick = function(node, data)
+		if #data.posStack == 0 then
+			return "failed"
+		end
+	
+		data.targetPos = table.remove(data.posStack)
+		return "success"
+	end,
+})
 

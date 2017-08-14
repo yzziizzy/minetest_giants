@@ -72,12 +72,26 @@ bt.register_action("SetNode", {
 		return "success"
 	end,
 	
-	ctor = function(sel)
-		return {
-			sel = sel
-		}
-	end,
+	ctor = function(sel) return { sel = sel } end,
 })
+
+bt.register_action("IsNode", {
+	tick = function(node, data)
+		if data.targetPos == nil then 
+			return "failed" 
+		end
+		
+		local n = minetest.get_node(data.targetPos)
+		if n == nil or n.name ~= node.sel then
+			return "failed"
+		end
+		
+		return "success"
+	end,
+	
+	ctor = function(sel) return { sel = sel } end,
+})
+
 
 bt.register_action("ExtinguishFire", {
 	tick = function(node, data)
@@ -156,11 +170,7 @@ bt.register_action("PutInChest", {
 		return "success"
 	end,
 	
-	ctor = function(sel)
-		return {
-			sel = sel
-		}
-	end,
+	ctor = function(sel) return { sel = sel } end,
 })
 
 
@@ -169,16 +179,33 @@ bt.register_action("Die", {
 	tick = function(node, data)
 		print("Dying now")
 		
+		-- TODO: remove inv and global data
+		
 		data.mob.object:remove()
 		
 		return "success"
 	end,
 })
 
+
+bt.register_action("Spawn", {
+	tick = function(node, data)
+		local pos = {x = data.targetPos.x, y = data.targetPos.y + 2, z = data.targetPos.z}
+		
+		local name = "giants:giant_"..node.role 
+		local mob = minetest.add_entity(pos, name)
+		
+		return "success"
+	end,
+	
+	ctor = function(role) return { role = role } end,
+})
+
+
 bt.register_action("PickUpNearbyItems", {
 	tick = function(node, data)
 		
-		local objects = minetest.get_objects_inside_radius(data.pos, data.mob.reach)
+		local objects = minetest.get_objects_inside_radius(data.pos, node.dist)
 		for _,object in ipairs(objects) do
 			if not object:is_player() and object:get_luaentity() and object:get_luaentity().name == "__builtin:item" then
 				if object:get_luaentity().itemstring == node.sel then
@@ -195,9 +222,10 @@ bt.register_action("PickUpNearbyItems", {
 		return "success"
 	end,
 	
-	ctor = function(sel)
+	ctor = function(sel, dist)
 		return {
-			sel = sel
+			sel = sel,
+			dist = dist,
 		}
 	end,
 })

@@ -515,3 +515,65 @@ bt.register_action("MoveTarget", {
 		}
 	end,
 })
+
+
+bt.register_action("MoveTargetRandom", {
+	tick = function(node, data)
+		if data.targetPos == nil then 
+			print("no active target")
+			return "failed" 
+		end
+		
+		return "success"
+	end,
+	
+	reset = function(node, data)
+		if data.targetPos == nil then -- game restarts cause this
+			return
+		end
+		
+		data.targetPos.x = data.targetPos.x + math.random(-node.range.x, node.range.x)
+		data.targetPos.y = data.targetPos.y + math.random(-node.range.y, node.range.y)
+		data.targetPos.z = data.targetPos.z + math.random(-node.range.z, node.range.z)
+	end,
+	
+	ctor = function(range)
+		return {
+			range = range,
+		}
+	end,
+})
+
+
+-- used for group identity
+bt.register_action("FindGroupCampfire", {
+	tick = function(node, data)
+		if data.groupID ~= nil then -- already has a group
+			if giants.groupData[data.groupID] ~= nil then
+				return "success"
+			end
+		end
+		
+		local cf = minetest.find_node_near(data.pos, 50, {name="giants:campfire"})
+		if cf ~= nil then
+			local key = cf.x..":"..cf.y..":"..cf.z
+			data.groupID = key
+			return "success"
+		else
+			return "failed"
+		end
+	end,
+})
+
+bt.register_action("HasGroup", {
+	tick = function(node, data)
+		if data.groupID ~= nil then -- already has a group
+			if giants.groupData[data.groupID] ~= nil then
+				return "success"
+			end
+		end
+		
+		return "failed"
+	end,
+})
+
