@@ -143,7 +143,7 @@ bt.register_action("PutInChest", {
 
 		local inv = minetest.get_inventory({type="node", pos=data.targetPos}) 
 		if inv == nil then 
-			print("!   [PutInChest] failed to get inv\n") 
+			print("!   [PutInChest] failed to get inv for "..dump(data.targetPos).."\n") 
 			return "failed"
 		end
 		

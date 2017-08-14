@@ -131,7 +131,8 @@ bt.register_action("FindPath", {
 
 bt.register_action("SetWaypointHere", {
 	tick = function(node, data)
-		data.waypoints[node.wpname] = data.pos
+		local pos = {x= data.pos.x, y= data.pos.y, z= data.pos.z}
+		data.waypoints[node.wpname] = pos
 		return "success"
 	end,
 	
@@ -148,7 +149,8 @@ bt.register_action("SetWaypoint", {
 			return "failed" 
 		end
 		
-		data.waypoints[node.wpname] = data.targetPos
+		local pos = {x= data.targetPos.x, y= data.targetPos.y, z= data.targetPos.z}
+		data.waypoints[node.wpname] = pos
 		return "success"
 	end,
 	
@@ -183,7 +185,8 @@ bt.register_action("SetGroupWaypoint", {
 			return "failed" 
 		end
 		
-		giants.groupData[data.groupID].waypoints[node.wpname] = data.targetPos
+		local pos = {x= data.targetPos.x, y= data.targetPos.y, z= data.targetPos.z}
+		giants.groupData[data.groupID].waypoints[node.wpname] = pos
 		return "success"
 	end,
 	
@@ -196,7 +199,13 @@ bt.register_action("SetGroupWaypoint", {
 
 bt.register_action("GetGroupWaypoint", {
 	tick = function(node, data)
-		if giants.groupData[data.groupID].waypoints[node.wpname] == nil then
+		if data.groupID == nil 
+			or giants.groupData[data.groupID] == nil 
+			or giants.groupData[data.groupID].waypoints == nil
+			or giants.groupData[data.groupID].waypoints[node.wpname] == nil then
+			
+			print(dump(giants.groupData[data.groupID]))
+			print("!   failed to find group ("..data.groupID..") waypoint " .. node.wpname .. "\n")
 			return "failed"
 		end
 	
@@ -219,7 +228,8 @@ bt.register_action("PushTarget", {
 			return "failed"
 		end
 	
-		table.insert(data.posStack, data.targetPos)
+		local pos = {x= data.targetPos.x, y= data.targetPos.y, z= data.targetPos.z}
+		table.insert(data.posStack, pos)
 		return "success"
 	end,
 })

@@ -1,23 +1,36 @@
 local path = minetest.get_modpath("giants")
 
-giants = {
-	groupData= {},
-	mobsAlive= {},
-}
+giants = {}
 
 
 
 local mod_storage = minetest.get_mod_storage()
  
 local storagedata = mod_storage:to_table() -- Assuming there are only messages in the mod configuration
-if storagedata ~= nil and storagedata.groupData ~= nil then
-	giants = storagedata
+print("storage data: \n")
+print(dump(storagedata))
+
+if storagedata ~= nil then
+	print("loading group data... " .. storagedata.fields.data)
+	giants = minetest.deserialize(storagedata.fields.data)
+	print(dump(giants))
 end
 
+if giants.groupData == nil then 
+	giants = {
+		groupData= {},
+		mobsAlive= {},
+	}
+end
 
-minetest.register_on_shutdown(function()
-	mod_storage:from_table(giants)
-end)
+local saveModData = function() 
+	print("saving group data: \n")
+	print(dump(giants))
+	--mod_storage:from_table(giants)
+	mod_storage:set_string("data", minetest.serialize(giants))
+end
+
+minetest.register_on_shutdown(saveModData)
 
 
 -- Mob Api
@@ -64,6 +77,8 @@ minetest.register_node("giants:campfire", {
 				waypoints = {},
 			}
 		end
+		
+		saveModData()
 	end,
 })
 

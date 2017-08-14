@@ -550,6 +550,8 @@ bt.register_action("FindGroupCampfire", {
 	tick = function(node, data)
 		if data.groupID ~= nil then -- already has a group
 			if giants.groupData[data.groupID] ~= nil then
+				print("@  joined group " .. data.groupID .. "\n")
+				print(dump(giants.groupData[data.groupID]))
 				return "success"
 			end
 		end
@@ -557,9 +559,20 @@ bt.register_action("FindGroupCampfire", {
 		local cf = minetest.find_node_near(data.pos, 50, {name="giants:campfire"})
 		if cf ~= nil then
 			local key = cf.x..":"..cf.y..":"..cf.z
+			
+			if giants.groupData[key] == nil then
+				print(dump(giants))
+-- 				print(dump(giants.groupData))
+				print("!   failed to find group for key "..key.."\n")
+				return "failed"
+			end
+			
 			data.groupID = key
+			print("@  joined group 2 " .. key .. "\n")
+			print(dump(giants.groupData[data.groupID]))
 			return "success"
 		else
+			print("!   failed to find group\n")
 			return "failed"
 		end
 	end,

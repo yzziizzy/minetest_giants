@@ -1,5 +1,31 @@
 
 
+local forager = function() 
+	return bt.Sequence("", {
+		bt.Succeed(bt.FindGroupCampfire()),
+		
+-- 		bt.Invert(bt.UntilFailed(bt.Sequence("find apples", {
+-- 			bt.FindItemNear("default:apple", 20),
+-- 			bt.Approach(2),
+-- 			bt.PickUpNearbyItems("default:apple", 2.5),
+-- 			bt.WaitTicks(1),
+-- 		}))),
+
+		bt.Invert(bt.UntilFailed(bt.Sequence("find saplings", {
+			bt.FindItemNear("group:sapling", 20),
+			bt.Approach(2),
+			bt.PickUpNearbyItems("group:sapling", 2.5),
+			bt.WaitTicks(1),
+		}))),
+		
+		bt.GetGroupWaypoint("food_chest"),
+		bt.Approach(2),
+		bt.PutInChest(nil),
+		
+		bt.WaitTicks(1),
+	})
+end
+
 local lumberjack = function() 
 	return bt.Sequence("", {
 		bt.Succeed(bt.FindGroupCampfire()),
@@ -42,7 +68,7 @@ local lumberjack = function()
 			
 			
 			-- put wood in chest
-			bt.GetWaypoint("chest"),
+			bt.GetGroupWaypoint("lumber_chest"),
 			bt.Approach(2),
 			bt.PutInChest(nil),
 			
@@ -448,6 +474,10 @@ end)
 
 make_giant("founder", function() 
 	return found_village()
+end)
+
+make_giant("forager", function() 
+	return forager()
 end)
 
 --[[
