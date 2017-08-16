@@ -7,13 +7,13 @@ giants = {}
 local mod_storage = minetest.get_mod_storage()
  
 local storagedata = mod_storage:to_table() -- Assuming there are only messages in the mod configuration
-print("storage data: \n")
-print(dump(storagedata))
+--print("storage data: \n")
+--print(dump(storagedata))
 
 if storagedata ~= nil then
-	print("loading group data... " .. storagedata.fields.data)
+	--print("loading group data... " .. storagedata.fields.data)
 	giants = minetest.deserialize(storagedata.fields.data)
-	print(dump(giants))
+	--print(dump(giants))
 end
 
 if giants.groupData == nil then 
@@ -24,8 +24,8 @@ if giants.groupData == nil then
 end
 
 local saveModData = function() 
-	print("saving group data: \n")
-	print(dump(giants))
+	--print("saving group data: \n")
+	--print(dump(giants))
 	--mod_storage:from_table(giants)
 	mod_storage:set_string("data", minetest.serialize(giants))
 end

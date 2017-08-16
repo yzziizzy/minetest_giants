@@ -43,6 +43,130 @@ bt.register_action("FindSpotOnGround", {
 })
 
 
+function vector_sub(a, b)
+	return {
+		x = a.x - b.x,
+		y = a.y - b.y,
+		z = a.z - b.z,
+	}
+end
+
+function vector_len(a)
+	return math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z)
+end
+
+function vector_normalize(a) 
+	local len = vector_len(a)
+	if len == 0 then
+		print("attempting to normalize zero-length vector\n")
+		len = 1 -- just do something kinda sorta sane so we don't div/0. 
+	end
+	return {
+		x = a.x / len,
+		y = a.y / len,
+		z = a.z / len,
+	}
+end
+
+function round(x)
+	return x>=0 and math.floor(x+0.5) or math.ceil(x-0.5)
+end
+
+
+bt.register_action("DirectionTo", {
+	tick = function(node, data)
+		if data.targetPos == nil then 
+			print("no target position\n")
+			return "failed" 
+		end
+
+		if data.waypoints[node.wpname] == nil then 
+			print("no such waypoint: " .. node.wpname .. "\n")
+			return "failed" 
+		end
+		
+		return "success"
+	end,
+	
+	reset = function(node, data)
+		local wp = data.waypoints[node.wpname]
+		local diff = vector_sub(wp, data.targetPos)
+		
+		data.direction = vector_normalize(diff)
+	end,
+	
+	ctor = function(wpname) return { wpname= wpname } end,
+})
+
+
+bt.register_action("RandomDirection", {
+	tick = function(node, data)
+		return "success"
+	end,
+	
+	reset = function(node, data)
+		data.direction = vector_normalize({
+			x = math.random() * 2 - 1,
+			y = 0,
+			z = math.random() * 2 - 1,
+		})
+	end,
+})
+
+bt.register_action("MoveInDirection", {
+	tick = function(node, data)
+		if data.direction == nil then 
+			print("no current direction \n")
+			return "failed" 
+		end
+		
+		return "success"
+	end,
+	
+	reset = function(node, data)
+		data.targetPos = {
+			x = round(data.pos.x + (data.direction.x * node.dist)),
+			y = round(data.pos.y + (data.direction.y * node.dist)),
+			z = round(data.pos.z + (data.direction.z * node.dist)),
+		}
+	end,
+	
+	ctor = function(dist) return { dist= dist } end,
+})
+
+bt.register_action("MoveInDirectionFromWaypoint", {
+	tick = function(node, data)
+		if data.waypoints[node.wpname] == nil then 
+			print("no such waypoint: " .. node.wpname .. "\n")
+			return "failed" 
+		end
+
+		if data.direction == nil then 
+			print("no current direction \n")
+			return "failed" 
+		end
+		
+		return "success"
+	end,
+	
+	reset = function(node, data)
+		local pos = data.waypoints[node.wpname]
+		data.targetPos = {
+			x = round(pos.x + data.direction.x * node.dist),
+			z = round(pos.y + data.direction.y * node.dist),
+			y = round(pos.z + data.direction.z * node.dist),
+		}
+	end,
+	
+	ctor = function(wpname, dist) 
+		return { 
+			wpname= wpname, 
+			dist= dist, 
+		} 
+	end,
+})
+
+
 bt.register_action("FindNewNodeNear", {
 	tick = function(node, data)
 		if data.targetPos == nil then 

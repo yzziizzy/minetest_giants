@@ -1,23 +1,89 @@
+--[[
+forager
+farmer
 
+crafter
+guards (need weapons)
+
+fix lumberjack stuck on trees
+
+torches
+moat
+walls (need perimeter fn)
+stairs, positional
+
+
+find node far away from
+flee function
+
+
+make mobs open doors
+make mobs climb ladders
+approach with timeout/stuck fn
+
+]]
+
+
+local place_at = function(item) 
+	return bt.Sequence("", {
+		bt.Approach(2),
+		bt.Animate("punch"),
+		bt.SetNode(item),
+	})
+end
+
+local build_to = function(item) 
+	return bt.Sequence("", {
+	
+	
+		bt.Approach(2),
+		bt.Animate("punch"),
+		bt.SetNode(item),
+	})
+end
+
+
+local wander_around = function() 
+	return bt.Sequence("", {
+		bt.RandomDirection(),
+		bt.MoveInDirection(7),
+		bt.Approach(2),
+	})
+end
+
+-- designed for use in a selector
+local forage_node = function(items, dist) 
+	return bt.Invert(bt.UntilFailed(bt.Sequence("forage "..dump(items), {
+		bt.FindNodeNear(items, dist),
+		bt.Approach(2),
+		bt.Animate("punch"),
+		bt.DigNode(),
+		bt.WaitTicks(1),
+		bt.Counter("items_in_hand", "inc"),
+		bt.Invert(bt.Counter("items_in_hand", "eq", 3)),
+	})))
+end
 
 local forager = function() 
 	return bt.Sequence("", {
 		bt.Succeed(bt.FindGroupCampfire()),
 		
--- 		bt.Invert(bt.UntilFailed(bt.Sequence("find apples", {
--- 			bt.FindItemNear("default:apple", 20),
--- 			bt.Approach(2),
--- 			bt.PickUpNearbyItems("default:apple", 2.5),
--- 			bt.WaitTicks(1),
--- 		}))),
-
-		bt.Invert(bt.UntilFailed(bt.Sequence("find saplings", {
-			bt.FindItemNear("group:sapling", 20),
-			bt.Approach(2),
-			bt.PickUpNearbyItems("group:sapling", 2.5),
-			bt.WaitTicks(1),
-		}))),
+		bt.Counter("items_in_hand", "set", 0),
+		bt.Invert(bt.Selector("find some food", {
+-- 			bt.UntilFailed(bt.Sequence("find apples", {
+-- 				bt.FindItemNear("default:apple", 20),
+-- 				bt.Approach(2),
+-- 				bt.PickUpNearbyItems("default:apple", 2.5),
+-- 				bt.WaitTicks(1),
+-- 				bt.Counter("foo", "inc"),
+-- 				bt.Invert(bt.Counter("foo", "eq", 3)),
+-- 			})),
+			
+			forage_node({"default:apple"}, 20),
+			forage_node({"flowers:mushroom_brown"}, 20),
+		})),
 		
+		bt.Print("\n\n--------------------\n\n"),
 		bt.GetGroupWaypoint("food_chest"),
 		bt.Approach(2),
 		bt.PutInChest(nil),
@@ -478,6 +544,10 @@ end)
 
 make_giant("forager", function() 
 	return forager()
+end)
+
+make_giant("madman", function() 
+	return wander_around()
 end)
 
 --[[
