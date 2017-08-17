@@ -96,6 +96,8 @@ dofile(path..'/behaviors/predicates.lua')
 dofile(path..'/behaviors/search.lua')
 dofile(path..'/behaviors/movement.lua')
 dofile(path..'/behaviors/actions.lua')
+dofile(path..'/behaviors/waypoints.lua')
+dofile(path..'/behaviors/regions.lua')
 
 
 
