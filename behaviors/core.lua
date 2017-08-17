@@ -354,6 +354,14 @@ bt.register_action("Counter", {
 			return "failed"
 		elseif node.op == "ne" and data.counters[node.cname] == node.val then
 			return "failed"
+		elseif node.op == "gt" and data.counters[node.cname] <= node.val then
+			return "failed"
+		elseif node.op == "lt" and data.counters[node.cname] >= node.val then
+			return "failed"
+		elseif node.op == "gte" and data.counters[node.cname] < node.val then
+			return "failed"
+		elseif node.op == "lte" and data.counters[node.cname] > node.val then
+			return "failed"
 		end
 		
 		return "success"

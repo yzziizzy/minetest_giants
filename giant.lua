@@ -52,38 +52,54 @@ local wander_around = function()
 end
 
 -- designed for use in a selector
-local forage_node = function(items, dist) 
-	return bt.Invert(bt.UntilFailed(bt.Sequence("forage "..dump(items), {
+local forage_node = function(items, dist, counter, maxItems) 
+	return bt.UntilFailed(bt.Sequence("forage "..dump(items), {
+		bt.Invert(bt.Counter(counter, "gte", maxItems)),
 		bt.FindNodeNear(items, dist),
 		bt.Approach(2),
 		bt.Animate("punch"),
 		bt.DigNode(),
 		bt.WaitTicks(1),
-		bt.Counter("items_in_hand", "inc"),
-		bt.Invert(bt.Counter("items_in_hand", "eq", 3)),
-	})))
+		bt.Counter(counter, "inc"),
+	}))
+end
+
+local forage_item = function(items, dist, counter, maxItems) 
+	return bt.UntilFailed(bt.Sequence("forage "..dump(items), {
+		bt.Invert(bt.Counter(counter, "gte", maxItems)),
+		bt.FindItemNear(item, dist),
+		bt.Approach(2),
+		bt.Animate("punch"),
+		bt.PickUpNearbyItems(item, 2.5),
+		bt.WaitTicks(1),
+		bt.Counter(counter, "inc"),
+	}))
 end
 
 local forager = function() 
+	local food_items = {
+		"default:apple",
+		"group:sapling",
+	}
+	
+	local food_nodes = {
+		"default:apple",
+		"flowers:mushroom_brown",
+	}
+
 	return bt.Sequence("", {
 		bt.Succeed(bt.FindGroupCampfire()),
 		
 		bt.Counter("items_in_hand", "set", 0),
 		bt.Invert(bt.Selector("find some food", {
--- 			bt.UntilFailed(bt.Sequence("find apples", {
--- 				bt.FindItemNear("default:apple", 20),
--- 				bt.Approach(2),
--- 				bt.PickUpNearbyItems("default:apple", 2.5),
--- 				bt.WaitTicks(1),
--- 				bt.Counter("foo", "inc"),
--- 				bt.Invert(bt.Counter("foo", "eq", 3)),
--- 			})),
+			forage_item(food_items, 20, "items_in_hand", 4),
+			forage_node(food_nodes, 20, "items_in_hand", 4),
 			
-			forage_node({"default:apple"}, 20),
-			forage_node({"flowers:mushroom_brown"}, 20),
+			forage_item(food_items, 40, "items_in_hand", 4),
+			forage_node(food_nodes, 40, "items_in_hand", 4),
 		})),
 		
-		bt.Print("\n\n--------------------\n\n"),
+		
 		bt.GetGroupWaypoint("food_chest"),
 		bt.Approach(2),
 		bt.PutInChest(nil),
