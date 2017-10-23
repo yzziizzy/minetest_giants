@@ -396,6 +396,7 @@ minetest.register_entity(name, {
 			groupID = "default",
 			
 			waypoints= {},
+			paths= {},
 			counters={},
 			
 			history={},

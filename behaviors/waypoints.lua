@@ -97,3 +97,63 @@ bt.register_action("GetGroupWaypoint", {
 
 
 
+
+
+bt.register_action("CreatePathHere", {
+	tick = function(node, data)
+		if data.pos == nil then 
+			return "failed" 
+		end
+		
+		local pos = {x= data.pos.x, y= data.pos.y, z= data.pos.z}
+		data.paths[node.pname] = {pos}
+		return "success"
+	end,
+	
+	ctor = function(name) return { pname=name or "_" } end,
+})
+
+bt.register_action("CreatePath", {
+	tick = function(node, data)
+		if data.targetPos == nil then 
+			return "failed" 
+		end
+		
+		local pos = {x= data.targetPos.x, y= data.targetPos.y, z= data.targetPos.z}
+		data.paths[node.pname] = {pos}
+		return "success"
+	end,
+	
+	ctor = function(name) return { pname=name or "_" } end,
+})
+
+bt.register_action("AddPathNodeHere", {
+	tick = function(node, data)
+		if data.pos == nil then 
+			return "failed" 
+		end
+		
+		local pos = {x= data.pos.x, y= data.pos.y, z= data.pos.z}
+		table.insert(data.paths[node.pname], pos)
+		return "success"
+	end,
+	
+	ctor = function(name) return { pname=name or "_" } end,
+})
+
+bt.register_action("AddPathNode", {
+	tick = function(node, data)
+		if data.targetPos == nil then 
+			return "failed" 
+		end
+		
+		local pos = {x= data.targetPos.x, y= data.targetPos.y, z= data.targetPos.z}
+		table.insert(data.paths[node.pname], pos)
+		return "success"
+	end,
+	
+	ctor = function(name) return { pname=name or "_" } end,
+})
+
+
+

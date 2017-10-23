@@ -40,7 +40,7 @@ dofile(path.."/behavior.lua")
 dofile(path.."/simple_api.lua")
 
 
-
+dofile(path.."/scripts/init.lua")
 dofile(path.."/giant.lua") 
 
 
